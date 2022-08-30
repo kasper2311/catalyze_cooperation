@@ -29,4 +29,4 @@ Instructions:
  
  The lower half outer circle represents action taken when group consensus is NARRATIVE 2. If the color is RED, the hunter hunts STAG. If the color is GREEN, the hunter hunts HARE)
 
- The ability to edit the "strategies" and "proportions" variables will be coming shortly. I am completely new to everything that I've done for this particular project, so I apologise in advance for any issues.
+ The ability to edit the "strategies" and "proportions" variables ingame will be coming shortly. I am completely new to everything that I've done for this particular project, so I apologise in advance for any issues.
