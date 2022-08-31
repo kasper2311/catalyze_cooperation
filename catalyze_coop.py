@@ -165,7 +165,7 @@ while True:
                 proportions = [item.getval() for item in allbars]
                 mygen = 0
                 thescene = myscene(strategies,proportions,total,size,payoffs,fitnessweight,stagthresh,mutnrate,mysurfacesize,radius,overlap)
-                init = False
+                init = not init
                 
     
     if init:
@@ -183,7 +183,7 @@ while True:
         screen.fill(BACKGROUND)
         for bar in allbars:
             bar.draw(screen,myfont)
-        
+        writetext(font,"Press Enter to simulate",screen,[width/2 , height - 20],colors.WHITE,BACKGROUND)
         pygame.display.flip()
     else:
         if not paused:
