@@ -4,8 +4,72 @@ Created on Thu Aug 25 17:34:57 2022
 
 @author: ADMIN
 """
-
+import pygame
+import colors
 import numpy as np
+
+def drawhunter(screen,mloc,radius,hunter):
+    hunterstrat,belief = hunter.getme()[:2],hunter.getme()[2]
+    if hunterstrat[0] == "S":
+        pygame.draw.circle(surface = screen, color = colors.TOMATO, center = mloc, radius = radius, draw_top_right= True, draw_top_left=True)
+    else:
+        pygame.draw.circle(surface = screen, color = colors.GREEN, center = mloc, radius = radius, draw_top_right= True, draw_top_left=True)
+            
+    if hunterstrat[1] == "S":
+        pygame.draw.circle(surface = screen,color = colors.TOMATO, center = mloc, radius = radius, draw_bottom_left=True,draw_bottom_right= True)
+    else:
+        pygame.draw.circle(surface = screen, color = colors.GREEN, center = mloc, radius = radius, draw_bottom_left=True,draw_bottom_right= True)
+            
+    if belief == 1:
+        pygame.draw.circle(surface = screen,color = colors.AQUA, center = mloc, radius = radius/2)
+    else:
+        pygame.draw.circle(surface = screen,color = colors.YELLOW, center = mloc, radius = radius/2)
+
+def writetext(font,towrite,screen,loc,color,background):
+    text = font.render(f'{towrite}', True, color, background)
+    textRect = text.get_rect()
+    textRect.center = ( loc[0] , loc[1] )
+    screen.blit(text,textRect)
+
+class vec2:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+    
+    def elems(self):
+        return self.x,self.y
+    
+    def __add__(self,pos2):
+        return vec2(self.x + pos2.x,self.y + pos2.y)
+    
+    def __sub__(self,pos2):
+        return vec2(self.x - pos2.x,self.y - pos2.y)
+    
+    def mag(self):
+        return (self.x**2 + self.y**2)**0.5
+    
+    def __truediv__(self,myfrac):
+        if isinstance(myfrac,vec2):
+            return vec2(*[a/b for a,b in zip(self.elems(),myfrac)])
+        else:
+            return vec2(self.x/myfrac,self.y/myfrac)
+    
+    def __mul__(self,myfrac):
+        if isinstance(myfrac,vec2):
+            return vec2(*[a*b for a,b in zip(self.elems(),myfrac)])
+        else:
+            return vec2(self.x*myfrac,self.y*myfrac)
+    
+    def __repr__(self):
+        return "({}, {})".format(self.x,self.y)
+    
+    def __getitem__(self,i):
+        if i == 0:
+            return self.x
+        elif i == 1:
+            return self.y
+        else:
+            raise KeyError
 
 
 class hunter:
@@ -31,7 +95,7 @@ class hunter:
             newstrat = self.getme()
         return hunter(*newstrat)
     def __repr__(self):
-        return f"({self.a1},{self.a2},{self.u})"
+        return f"{self.a1} {self.a2} {self.u}"
 
 
 def chunker(seq, size):
@@ -126,14 +190,6 @@ def getfitnessandreproduce(allpayoffs,weight = 1.0):
     return toreprod,todie
 
 def getnextgen(hunterlist,toreprod,todie,mutation,strategies):
-    strategies = [("H","H",1),
-                  ("H","H",2),
-                  ("H","S",1),
-                  ("H","S",2),
-                  ("S","H",1),
-                  ("S","H",2),
-                  ("S","S",1),
-                  ("S","S",2)]
     #Population size remains the same
     reprod = hunterlist[toreprod]
     

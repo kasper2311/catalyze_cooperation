@@ -9,47 +9,10 @@ import pygame
 import colors
 import numpy as np
 from catalyze_coop_brain import *
+from movebarscript import *
 import sys
 
-class vec2:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-    
-    def elems(self):
-        return self.x,self.y
-    
-    def __add__(self,pos2):
-        return vec2(self.x + pos2.x,self.y + pos2.y)
-    
-    def __sub__(self,pos2):
-        return vec2(self.x - pos2.x,self.y - pos2.y)
-    
-    def mag(self):
-        return (self.x**2 + self.y**2)**0.5
-    
-    def __truediv__(self,myfrac):
-        if isinstance(myfrac,vec2):
-            return vec2(*[a/b for a,b in zip(self.elems(),myfrac)])
-        else:
-            return vec2(self.x/myfrac,self.y/myfrac)
-    
-    def __mul__(self,myfrac):
-        if isinstance(myfrac,vec2):
-            return vec2(*[a*b for a,b in zip(self.elems(),myfrac)])
-        else:
-            return vec2(self.x*myfrac,self.y*myfrac)
-    
-    def __repr__(self):
-        return "({}, {})".format(self.x,self.y)
-    
-    def __getitem__(self,i):
-        if i == 0:
-            return self.x
-        elif i == 1:
-            return self.y
-        else:
-            raise KeyError
+
 
 def gen_random_point(xrange,yrange):
     myx = np.random.randint(xrange[0],xrange[1] + 1)
@@ -81,6 +44,8 @@ def gen_hunter_locs(hunterlist,xrange,yrange,radius):
 
 
 
+
+
 class myscene:
     def __init__(self,strategies,proportions,total,size,payoffs,fitnessweight,stagthresh,mutnrate,screensize,radius,overlap):
         self.hunterlist = spawnhunters(strategies, proportions, total)
@@ -105,33 +70,22 @@ class myscene:
     def draw(self,screen):
         for k,hunter in enumerate(self.oldhunters):
             mloc = self.loclist[k].elems()
-            hunterstrat,belief = hunter.getme()[:2],hunter.getme()[2]
-            if hunterstrat[0] == "S":
-                pygame.draw.circle(surface = screen, color = colors.TOMATO, center = mloc, radius = self.radius, draw_top_right= True, draw_top_left=True)
-            else:
-                pygame.draw.circle(surface = screen, color = colors.GREEN, center = mloc, radius = self.radius, draw_top_right= True, draw_top_left=True)
-            
-            if hunterstrat[1] == "S":
-                pygame.draw.circle(surface = screen,color = colors.TOMATO, center = mloc, radius = self.radius, draw_bottom_left=True,draw_bottom_right= True)
-            else:
-                pygame.draw.circle(surface = screen, color = colors.GREEN, center = mloc, radius = self.radius, draw_bottom_left=True,draw_bottom_right= True)
-            
-            if belief == 1:
-                pygame.draw.circle(surface = screen,color = colors.AQUA, center = mloc, radius = self.radius/2)
-            else:
-                pygame.draw.circle(surface = screen,color = colors.YELLOW, center = mloc, radius = self.radius/2)
-                
+            drawhunter(screen, mloc, self.radius, hunter)
+     
 
+
+
+#if __name__ == "__main__":
 pygame.init()
 clock = pygame.time.Clock()
 framerate = 1 # In case you want to limit framerate to look at things slowly
 screensize = pygame.display.Info().current_w,pygame.display.Info().current_h
-print(screensize)
-mysurfacesize = width, height =screensize[0] - 100,screensize[1] - 200
+mysurfacesize = width, height =1000,700
 screen = pygame.display.set_mode(mysurfacesize)
 drawwhen = 20 # update every 20 generations
-
-
+BACKGROUND = colors.BLACK
+myfont = font = pygame.font.Font('freesansbold.ttf', 10)
+font = pygame.font.Font('freesansbold.ttf', 20)
 
 
 strategies = [
@@ -145,16 +99,9 @@ strategies = [
     ("S","S",2)
 ]
 
-proportions = [
-    0.5,
-    0.0,
-    0.1,
-    0.0,
-    0.1,
-    0.0,
-    0.0,
-    0.3
-]
+
+hunters = [hunter(*item) for item in strategies]
+
 
 total = 100
 size = 5
@@ -165,33 +112,96 @@ mutnrate = 0.001
 radius = 10
 overlap = 5
 
-thescene = myscene(strategies,proportions,total,size,payoffs,fitnessweight,stagthresh,mutnrate,mysurfacesize,radius,overlap)
 
 mygen = 0
 i = 0
-font = pygame.font.Font('freesansbold.ttf', 20)
+paused = False
+
+init = True
+
+midpoint = int(len(hunters)/2)
+
+allbars = create_spaced_bars(mysurfacesize, height/2 - 150 , [0,1], 20, hunters[:midpoint], 10)
+allbars += create_spaced_bars(mysurfacesize, height/2 + 150 , [0,1], 20, hunters[midpoint:], 10)
+
+
+# while True:
+    
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#                 pygame.quit()
+#                 sys.exit()
+#         if event.type == pygame.KEYDOWN:
+#             if event.key == pygame.K_SPACE:
+#                 paused = not paused # negation of whatever was there
+        
+#     if not paused:
+#         thescene.c_taketimestep()
+#         mygen += 1
+    
+#     screen.fill(BACKGROUND)
+    
+#     if i % drawwhen == 0:
+#         thescene.updatehunters()
+#         i = 0
+    
+#     thescene.draw(screen)
+    
+#     i += 1
+    
+#     writetext(font,mygen,screen,[width/2 , height - 10],colors.WHITE,BACKGROUND)
+#     pygame.display.flip()
 
 while True:
-    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                paused = not paused
+            if event.key == pygame.K_RETURN:
+                #This will restart the process whenever we press enter
+                proportions = [item.getval() for item in allbars]
+                mygen = 0
+                thescene = myscene(strategies,proportions,total,size,payoffs,fitnessweight,stagthresh,mutnrate,mysurfacesize,radius,overlap)
+                init = False
+                
+    
+    if init:
+        click = pygame.mouse.get_pressed()[0]
+        change = process_values([item.getval() for item in allbars])
         
-    screen.fill(colors.BLACK)
-    thescene.c_taketimestep()
-    
-    if i % drawwhen == 0:
-        thescene.updatehunters()
         i = 0
+        for bar in allbars:
+            bar.update(click)
+            bar.changeposn(click, change[i])
+            i += 1
+            
+        
+        
+        screen.fill(BACKGROUND)
+        for bar in allbars:
+            bar.draw(screen,myfont)
+        
+        pygame.display.flip()
+    else:
+        if not paused:
+            thescene.c_taketimestep()
+            mygen += 1
     
-    thescene.draw(screen)
-    #pygame.draw.circle(screen, colors.AQUA, center=(200,200), radius=20)
+        screen.fill(BACKGROUND)
     
-    i += 1
-    mygen += 1
-    text = font.render(f'{mygen}', True, colors.BLACK, colors.WHITE)
-    textRect = text.get_rect()
-    textRect.center = ( width/2 , height - 10 )
-    screen.blit(text,textRect)
-    pygame.display.flip()
+        if i % drawwhen == 0:
+            thescene.updatehunters()
+            i = 0
+    
+        thescene.draw(screen)
+    
+        i += 1
+    
+        writetext(font,mygen,screen,[width/2 , height - 10],colors.WHITE,BACKGROUND)
+        pygame.display.flip()
+                
+        
+    
