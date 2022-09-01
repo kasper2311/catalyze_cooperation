@@ -9,6 +9,65 @@ import colors
 import sys
 from catalyze_coop_brain import vec2,writetext,drawhunter,hunter
 
+class basemovebar:
+    def __init__(self,pos1,pos2,width,mrange,bg = colors.BLACK,color = colors.WHITE):
+        assert pos2.y == pos1.y
+        assert pos1.x < pos2.x
+        self.pos1 = pos1
+        self.pos2 = pos2
+        self.width = width
+        self.mrange = mrange
+        self.mousepos = pos1 - vec2(0,0) # Somehow this nonsense is needed to decouple self.pos1 from self.mousepos
+        self.color = color
+        self.bg = bg
+        self.rect = pygame.Rect(pos1.x, pos1.y - (width/2), pos2.x - pos1.x, width)
+        
+    def draw(self,screen,font,text):
+        radius2 = self.width/2
+        place = self.mousepos
+        #Draw the rect
+        gap1 = 20
+        gap2 = 20
+        
+        mloc = vec2(((self.pos2.x - self.pos1.x)/2.) + self.pos1.x,self.pos1.y - gap2)
+        
+        pygame.draw.rect(screen,
+                        colors.GRAY,
+                        self.rect)
+        #Draw circle on top of rect
+        pygame.draw.circle(screen, colors.WHITE, [place.x,self.pos1.y], radius2)
+        writetext(font, self.mrange[0], screen, (self.pos1 - vec2(gap1,0)).elems(), self.color, self.bg)
+        writetext(font, self.mrange[1], screen, (self.pos2 + vec2(gap1,0)).elems(), self.color, self.bg)
+        writetext(font,text,screen, mloc.elems(),self.color,self.bg)
+        writetext(font,self.getval("int"),screen,(self.mousepos + vec2(0,gap2 - self.mousepos.y + self.pos2.y)).elems(),self.color,self.bg)
+    
+    def update(self,click):
+        cur = vec2(*pygame.mouse.get_pos())
+        iscollide = self.rect.collidepoint(cur.x, cur.y)
+        if click and iscollide:
+            #currently_occupied.add(self)
+            self.mousepos = cur
+    
+    def getval(self,mtype):
+        posn = (self.mousepos.x - self.pos1.x)/(self.pos2.x - self.pos1.x)
+        fin = posn*(self.mrange[1] - self.mrange[0]) + self.mrange[0]
+        if mtype == "int":
+            return int(fin)
+        elif mtype == "float":
+            return fin
+
+class mutnbar(basemovebar):
+    
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+    
+    def getval(self,throwaway):
+        posn = (self.mousepos.x - self.pos1.x)/(self.pos2.x - self.pos1.x)
+        if posn <= 0.001:
+            return 0.0
+        fin = 10**(posn*10 - 10)
+        return fin
+
 class movebar:
     def __init__(self,pos1,pos2,width,mrange,hunter,radius,bg = colors.BLACK,color = colors.WHITE):
         assert pos2.y == pos1.y
@@ -52,6 +111,8 @@ class movebar:
     
     def getval(self):
         posn = (self.mousepos.x - self.pos1.x)/(self.pos2.x - self.pos1.x)
+        if posn <= 0.01:
+            return 0.0
         fin = posn*(self.mrange[1] - self.mrange[0]) + self.mrange[0]
         return fin
     
@@ -138,6 +199,9 @@ if __name__ == "__main__":
     
     allbars = create_spaced_bars(mysurfacesize, height/2 - 150 , [0,1], 20, hunters[:4], 10)
     allbars += create_spaced_bars(mysurfacesize, height/2 + 150 , [0,1], 20, hunters[4:], 10)
+    print(height)
+    totalbar = basemovebar(vec2((width/2) - 100,height - 100), vec2((width/2) + 100,height - 100), 20, [100,1000])
+    mutn = mutnbar(vec2((width/2) - 100,100), vec2((width/2) + 100,100), 20, [0,1])
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -151,6 +215,9 @@ if __name__ == "__main__":
         change = process_values([item.getval() for item in allbars])
         
         i = 0
+        
+        totalbar.update(click)
+        mutn.update(click)
         for bar in allbars:
             bar.update(click)
             bar.changeposn(click, change[i])
@@ -159,6 +226,9 @@ if __name__ == "__main__":
         
         
         screen.fill(colors.BLACK)
+        
+        totalbar.draw(screen, myfont, "TOTAL")
+        mutn.draw(screen, myfont, "MUTATION PROBABILITY")
         for bar in allbars:
             bar.draw(screen,myfont)
         
