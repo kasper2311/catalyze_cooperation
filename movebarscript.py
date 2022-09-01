@@ -28,6 +28,12 @@ class basemovebar:
         #Draw the rect
         gap1 = 20
         gap2 = 20
+        myval = self.getval("int")
+        
+        if isinstance(myval,type(1.2)):
+            myval = "{:.10f}".format(myval)
+        else:
+            myval = str(myval)
         
         mloc = vec2(((self.pos2.x - self.pos1.x)/2.) + self.pos1.x,self.pos1.y - gap2)
         
@@ -39,7 +45,7 @@ class basemovebar:
         writetext(font, self.mrange[0], screen, (self.pos1 - vec2(gap1,0)).elems(), self.color, self.bg)
         writetext(font, self.mrange[1], screen, (self.pos2 + vec2(gap1,0)).elems(), self.color, self.bg)
         writetext(font,text,screen, mloc.elems(),self.color,self.bg)
-        writetext(font,self.getval("int"),screen,(self.mousepos + vec2(0,gap2 - self.mousepos.y + self.pos2.y)).elems(),self.color,self.bg)
+        writetext(font,myval,screen,(self.mousepos + vec2(0,gap2 - self.mousepos.y + self.pos2.y)).elems(),self.color,self.bg)
     
     def update(self,click):
         cur = vec2(*pygame.mouse.get_pos())
@@ -63,8 +69,10 @@ class mutnbar(basemovebar):
     
     def getval(self,throwaway):
         posn = (self.mousepos.x - self.pos1.x)/(self.pos2.x - self.pos1.x)
-        if posn <= 0.001:
-            return 0.0
+        if posn <= 0.01:
+            return self.mrange[0]
+        elif posn >= 0.99:
+            return self.mrange[1]
         fin = 10**(posn*10 - 10)
         return fin
 
@@ -112,7 +120,9 @@ class movebar:
     def getval(self):
         posn = (self.mousepos.x - self.pos1.x)/(self.pos2.x - self.pos1.x)
         if posn <= 0.01:
-            return 0.0
+            return self.mrange[0]
+        elif posn >= 0.99:
+            return self.mrange[1]
         fin = posn*(self.mrange[1] - self.mrange[0]) + self.mrange[0]
         return fin
     
