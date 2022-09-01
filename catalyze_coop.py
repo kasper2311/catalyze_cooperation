@@ -102,13 +102,14 @@ strategies = [
 
 hunters = [hunter(*item) for item in strategies]
 
-
-total = 100
-size = 5
-payoffs = [1,4] #Hare,stag
-stagthresh = 4
-fitnessweight = 0.9
-mutnrate = 0.001
+###########################edit these#####################################
+total = 100 #approximate total number of hunters
+size = 5 #number of hunters out of total to create a group
+payoffs = [1,4] #Harepayoff, stagpayoff
+stagthresh = 4 #Number of hunters needed for a successful stag hunt
+fitnessweight = 0.9 #Contribution of the game to fitness
+mutnrate = 0.001 #probability of mutation during a reproduction event
+##########################################################################
 radius = 10
 overlap = 5
 
